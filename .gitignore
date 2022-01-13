@@ -1,0 +1,7 @@
+**/venv
+venv
+**/*.csv
+zero
+**/*.json
+**/*.xlsx
+.idea
