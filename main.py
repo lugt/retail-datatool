@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 import xlsxwriter
 
-filename = 'weinan2.csv'
+filename = 'weinan3.csv'
 title_name = 'Weinan'
 head_found = False
 titles = []
@@ -338,6 +338,9 @@ def write_to_file(outcome, origin, stores):
     # 只有销量的表格
     dump_sales_only(workbook, stores)
 
+    # 导出销量扩展表
+    dump_sales_extended(workbook, stores)
+
     # Dump 售点档案表
     dump_as_sheets(workbook, outcome, origin, stores)
 
@@ -350,7 +353,7 @@ def dump_sales_only(workbook, stores):
     # Title1 Title2 ....
     # Seq
     row = 1
-    infos = ['编号', '名称', '地址', '计算店总', '填写店总']
+    infos = ['编号', '名称', '地址', '计算店总']
 
     col = 0
     for item in infos:
@@ -389,6 +392,60 @@ def dump_sales_only(workbook, stores):
             pass
         row += 1
         pass
+
+
+def dump_sales_extended(workbook, stores):
+    worksheet = workbook.add_worksheet('销售扩展表')
+    # Title1 Title2 ....
+    # Seq
+    row = 1
+    infos = ['编号', '名称', '地址', '计算店总']
+
+    col = 0
+    for item in infos:
+        worksheet.write_string(0, col, item)
+        col += 1
+
+    for item in brands:
+        worksheet.write_string(0, col, item + '销量')
+        col += 1
+        worksheet.write_string(0, col, item + '导购')
+        col += 1
+
+    for store in stores:
+        brands_total = 0
+        for brand in brands:
+            if brand == 'total':
+                continue
+
+            brand_sales = as_numeric(store['detail'].get(brand)[0])
+            brands_total += brand_sales
+
+        # Add other products into count
+        brands_total += as_numeric(store['detail'].get('other')[1])
+
+        worksheet.write_string(row, 0, store['sequence'])
+        worksheet.write_string(row, 1, store['name'])
+        worksheet.write_string(row, 2, store['location'])
+        worksheet.write_number(row, 3, brands_total)
+        base = 4
+        i = 0
+        for brand in brands:
+            extra = 0
+            if brand == 'other':
+                extra = 1
+            brand_sales = as_numeric(store['detail'].get(brand)[extra + 0])
+            brand_sellers = as_numeric(store['detail'].get(brand)[extra + 18])
+            worksheet.write_number(row, base + i, brand_sales)
+            i += 1
+            worksheet.write_number(row, base + i, brand_sellers)
+            i += 1
+            pass
+
+        # end of row
+        row += 1
+        pass
+
 
 def write_cell_vertical(col, cur_row, worksheet, data, type='n'):
     if type == 'n':
